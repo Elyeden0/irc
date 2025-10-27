@@ -1,0 +1,11 @@
+ircserv
+obj/
+*.o
+*.a
+.DS_Store
+*.swp
+*.swo
+*~
+.vscode/
+.idea/
+test_server.sh
