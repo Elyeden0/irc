@@ -5,6 +5,13 @@
 #include <poll.h>
 #include <string>
 
+const int error = -1;
+const int nothing = 0;
+const int client = 1;
+const int message = 2;
+const int deconexion = 3;
+
+
 class NetworkManager {
 public:
     NetworkManager();
@@ -15,8 +22,11 @@ public:
     int pollEvents();
     
     void addClient(int fd);
+    int make_poll();
     void removeClient(int fd);
     bool hasNewConnection() const;
+    void	error_text(std::string msg);
+    
     std::vector<int> getReadyClients() const;
     
     std::string getClientAddress(int fd) const;
