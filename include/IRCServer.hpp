@@ -14,31 +14,36 @@ const int deconexion = 3;
 
 class IRCServer {
 public:
-    IRCServer(int port, const std::string &password);
-    ~IRCServer();
-    
-    bool start();
-    int léa(int port);
-    void stop();
-    
-    const std::string& getPassword() const;
-    ClientManager& getClients();
-    ChannelManager& getChannels();
-    
-    static void signalHandler(int signal);
+	IRCServer(int port, const std::string &password);
+	~IRCServer();
+	
+	bool start();
+	int léa(int port);
+	void stop();
+	
+	const std::string& getPassword() const;
+	ClientManager& getClients();
+	ChannelManager& getChannels();
+	
+	static void signalHandler(int signal);
 
-    int     create_network(int port);
-    int     new_client();
-    int	poll_checker();
-    void	error_text(std::string msg);
-    
+	int		create_network(int port);
+	int		new_client();
+	void	error_text(std::string msg);
+	void	addClient(int fd);
+	int		make_poll();
+	void	removeClient(int fd);
+	void	NewMessage(void *buffer, int fd);
+
+	std::vector<struct pollfd> _fds;
+	
 private:
-    NetworkManager _network;
-    ClientManager _clients;
-    ChannelManager _channels;
-    const std::string _password;
-    static bool _running;
-    int _server_socket;
+	NetworkManager _network;
+	ClientManager _clients;
+	ChannelManager _channels;
+	const std::string _password;
+	static bool _running;
+	int _server_socket;
 };
 
 #endif

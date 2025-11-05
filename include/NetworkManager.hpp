@@ -5,12 +5,6 @@
 #include <poll.h>
 #include <string>
 
-const int error = -1;
-const int nothing = 0;
-const int client = 1;
-const int message = 2;
-const int deconexion = 3;
-
 
 class NetworkManager {
 public:
@@ -21,8 +15,8 @@ public:
     int acceptConnection();
     int pollEvents();
     
-    void addClient(int fd);
-    int make_poll();
+    // void addClient(int fd);
+    // int make_poll();
     void removeClient(int fd);
     bool hasNewConnection() const;
     void	error_text(std::string msg);
@@ -33,7 +27,7 @@ public:
     
 private:
     int _serverFd;
-    std::vector<struct pollfd> _fds;
+    // std::vector<struct pollfd> _fds;
     std::string getAddressString(struct sockaddr_in *addr) const;
 };
 

@@ -80,38 +80,7 @@ NetworkManager::~NetworkManager() {
 // // int NetworkManager::pollEvents() {
 // //     return poll(&_fds[0], _fds.size(), -1);
 // // }
-void NetworkManager::addClient(int fd)
-{
-    struct pollfd client_poll;
-	client_poll.fd = fd;
-	client_poll.events = POLLIN;
-	client_poll.revents = 0;
-	_fds.push_back(client_poll);
-}
 
-int NetworkManager::make_poll()
-{
-    int res = poll(_fds.data(), _fds.size(), -1);
-    if (res < 0)
-    {
-        error_text("poll doesn't work");
-        return error;
-    }
-    int i = 0;
-    while (i < _fds.size() && _fds[i].revents == 0)
-        i++;
-    if (i == 0)
-        return client;
-    else if (i >= _fds.size())
-        return nothing;
-    else
-    {
-        if (recv(_fds[i].fd, buffer, sizeof(buffer), 0) == 0)
-				return deconexion;
-			else
-				return message;
-    }
-    }
 
 // void NetworkManager::addClient(int fd) {
 //     struct pollfd pfd;

@@ -3,11 +3,14 @@
 #include "Replies.hpp"
 #include "Message.hpp"
 #include <iostream>
+#include <unistd.h>
 #include <sys/socket.h>
 #include <cerrno>
 #include <cstring>
 #include <netinet/in.h>
 #include <arpa/inet.h>
+#include <fcntl.h>
+std::string buffer[1024];
 
 bool IRCServer::_running = false;
 
@@ -42,6 +45,9 @@ int    IRCServer::create_network(int port)
 		error_text("Creating the socket is impossible");
 		return -1;
 	}
+	fcntl(_server_socket, F_SETFL, O_NONBLOCK);
+	int opt = 1;
+	setsockopt(_server_socket, SOL_SOCKET, SO_REUSEADDR, &opt, sizeof(opt));
 	int res = bind(_server_socket, (struct sockaddr *)&addr, sizeof(addr));
 	if (res == -1)
 	{
@@ -60,19 +66,19 @@ int    IRCServer::new_client()
 		error_text("Accept doesn't work");
 		return (-1);
 	}
-	_network.addClient(socket_clientA);
+	fcntl(socket_clientA, F_SETFL, O_NONBLOCK);
+	addClient(socket_clientA);
 	return (socket_clientA);
 }
 
-// void	IRCServer::initialize_server(int port)
-// {
-// 	_port = port;
-// 	struct sockaddr_in addr;
-//     std::memset(&addr, 0, sizeof(addr));
-//     addr.sin_family = AF_INET;
-//     addr.sin_addr.s_addr = INADDR_ANY;
-//     addr.sin_port = htons(_port);
-// }
+void IRCServer::addClient(int fd)
+{
+    struct pollfd client_poll;
+	client_poll.fd = fd;
+	client_poll.events = POLLIN;
+	client_poll.revents = 0;
+	_fds.push_back(client_poll);
+}
 int    IRCServer::léa(int port)
 {
 	std::cout << "IRC server started" << std::endl;
@@ -81,21 +87,63 @@ int    IRCServer::léa(int port)
 		return -1;
 	while (true)
 	{
-		int events = poll_checker();
+		int events = make_poll();
 		if (events == error)
 			return (-1);
 		else if (events == client)
 			new_client();
-		else if (events = deconexion)
-			deco();
-		else if (events = message)
-			message();
 	}
 }
 
-int	IRCServer::poll_checker()
+int	IRCServer::make_poll()
 {
-	_network.make_poll();
+	int res = poll(_fds.data(), _fds.size(), -1);
+    if (res < 0)
+    {
+        error_text("poll doesn't work");
+        return error;
+    }
+    int i = 0;
+    while (i < _fds.size() && _fds[i].revents == 0)
+        i++;
+    if (i == 0)
+        return client;
+    else if (i >= _fds.size())
+        return nothing;
+    else
+    {
+        if (recv(_fds[i].fd, buffer, sizeof(buffer), 0) == 0)
+		{
+			removeClient(_fds[i].fd);
+			return (deconexion);
+		}
+		else
+			NewMessage(buffer, _fds[i].fd);
+    }
+}
+
+void	IRCServer::removeClient(int fd)
+{
+	for (int i = 1; i < _fds.size(); ++i)
+	{
+		if (_fds[i].fd == fd)
+		{
+			close(fd);
+			_fds.erase(_fds.begin() + i);
+			break;
+		}
+	}
+}
+
+void	IRCServer::NewMessage(void * buffer, int fd)
+{
+	for (int i = 1; i < _fds.size(); ++i)
+	{
+		if (_fds[i].fd != fd)
+		{
+			send(_fds[i].fd, buffer, sizeof(buffer), 0);
+		}
+	}
 }
 
 bool IRCServer::start() {
