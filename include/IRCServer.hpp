@@ -5,6 +5,15 @@
 #include "ClientManager.hpp"
 #include "ChannelManager.hpp"
 #include <string>
+#include <vector>
+#include <sys/socket.h>
+#include <netinet/in.h>
+#include <arpa/inet.h>
+#include <unistd.h>
+#include <fcntl.h>
+#include <cstring>
+#include <iostream>
+#include <sstream>
 
 const int error = -1;
 const int nothing = 0;

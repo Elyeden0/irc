@@ -1,13 +1,5 @@
 #include "NetworkManager.hpp"
-#include <sys/socket.h>
-#include <netinet/in.h>
-#include <arpa/inet.h>
-#include <unistd.h>
-#include <fcntl.h>
-#include <cstring>
-#include <iostream>
-#include <sstream>
-std::string buffer[1024];
+#include "IRCServer.hpp"
 
 NetworkManager::NetworkManager() : _serverFd(-1) {}
 
@@ -15,11 +7,11 @@ NetworkManager::~NetworkManager() {
     if (_serverFd != -1) {
         close(_serverFd);
     }
-    for (size_t i = 0; i < _fds.size(); ++i) {
-        if (_fds[i].fd != _serverFd) {
-            close(_fds[i].fd);
-        }
-    }
+    // for (size_t i = 0; i < _fds.size(); ++i) {
+    //     if (_fds[i].fd != _serverFd) {
+    //         close(_fds[i].fd);
+    //     }
+    // }
 }
 
 // bool NetworkManager::initSocket(int port) {
