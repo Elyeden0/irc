@@ -1,4 +1,5 @@
 #include "User.hpp"
+
 #include <sys/socket.h>
 #include <unistd.h>
 #include <cstring>
@@ -19,14 +20,14 @@ AuthState User::getAuthState() const { return _authState; }
 void User::setAuthState(AuthState state) { _authState = state; }
 
 const std::string& User::getNickname() const { return _nickname; }
-// const std::string& User::getUsername() const { return _username; }
+const std::string& User::getUsername() const { return _username; }
 const std::string& User::getRealname() const { return _realname; }
 const std::string& User::getHostname() const { return _hostname; }
 
-// void User::setNickname(const std::string &nick) { _nickname = nick; }
-// void User::setUsername(const std::string &user) { _username = user; }
-// void User::setRealname(const std::string &real) { _realname = real; }
-// void User::setHostname(const std::string &host) { _hostname = host; }
+void User::setNickname(const std::string &nick) { _nickname = nick; }
+void User::setUsername(const std::string &user) { _username = user; }
+void User::setRealname(const std::string &real) { _realname = real; }
+void User::setHostname(const std::string &host) { _hostname = host; }
 
 std::string User::getPrefix() const {
     return _nickname + "!" + _username + "@" + _hostname;

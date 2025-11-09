@@ -8,17 +8,17 @@ ClientManager::~ClientManager() {
     }
 }
 
-// void ClientManager::addUser(int fd) {
-//     _users[fd] = new User(fd);
-// }
+void ClientManager::addUser(int fd) {
+    _users[fd] = new User(fd);
+}
 
-// void ClientManager::removeUser(int fd) {
-//     iterator it = _users.find(fd);
-//     if (it != _users.end()) {
-//         delete it->second;
-//         _users.erase(it);
-//     }
-// }
+void ClientManager::removeUser(int fd) {
+    iterator it = _users.find(fd);
+    if (it != _users.end()) {
+        delete it->second;
+        _users.erase(it);
+    }
+}
 
 User* ClientManager::getUser(int fd) {
     iterator it = _users.find(fd);

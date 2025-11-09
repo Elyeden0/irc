@@ -9,8 +9,8 @@ public:
     ClientManager();
     ~ClientManager();
     
-    // void addUser(int fd);
-    // void removeUser(int fd);
+    void addUser(int fd);
+    void removeUser(int fd);
     User* getUser(int fd);
     User* getUserByNick(const std::string &nickname);
     

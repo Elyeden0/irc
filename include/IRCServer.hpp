@@ -53,6 +53,7 @@ private:
 	const std::string _password;
 	static bool _running;
 	int _server_socket;
+	int _port;
 };
 
 #endif

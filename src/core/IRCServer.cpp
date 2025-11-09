@@ -3,17 +3,13 @@
 #include "Replies.hpp"
 #include "Message.hpp"
 
-// bool IRCServer::_running = false;
+bool IRCServer::_running = false;
 
-// // IRCServer::IRCServer(int port, const std::string &password)
-// // 	: _password(password) {
-// // 	if (!_network.initSocket(port)) {
-// // 		throw std::runtime_error("Failed to initialize network");
-// // 	}
-// }
+IRCServer::IRCServer(int port, const std::string &password)
+	: _password(password), _server_socket(-1), _port(port) {
+}
 
 IRCServer::~IRCServer() {
-	// stop();
 }
 
 void	IRCServer::error_text(std::string msg)
@@ -60,6 +56,7 @@ int    IRCServer::new_client()
 	}
 	fcntl(socket_clientA, F_SETFL, O_NONBLOCK);
 	addClient(socket_clientA);
+	_clients.addUser(socket_clientA);
 	return (socket_clientA);
 }
 
@@ -95,29 +92,73 @@ int	IRCServer::make_poll()
         error_text("poll doesn't work");
         return error;
     }
-    int i = -1;
-    while (++i < _fds.size())
+    size_t i = 0;
+    while (i < _fds.size())
 	{
-		if (_fds[i].revents == 0) // Pas d'évent pour ce fd
+		if (_fds[i].revents == 0) {
+			i++;
 			continue ;
+		}
 
-		if (i == 0) { // Un event sur la socket = nouvelle connexion
+		if (i == 0) {
 			std::cout << "Added a new client!" << std::endl;
 			new_client();
+			i++;
 			continue ;
+		}
+
+		if (!(_fds[i].revents & POLLIN)) {
+			i++;
+			continue;
 		}
 
 		int val;
 		val = recv(_fds[i].fd, buffer, 1024, 0);
-		buffer[val] = '\0';
-		if (val == 0) // Un event sur un client
+		if (val == 0)
 		{
 			std::cout << "Removed a client!" << std::endl;
+			_clients.removeUser(_fds[i].fd);
 			removeClient(_fds[i].fd);
-			i--;
 		}
-		else
-			NewMessage(buffer, _fds[i].fd);
+		else if (val < 0)
+		{
+			i++;
+		}
+		else {
+			buffer[val] = '\0';
+			std::cout << "Received: " << buffer << std::endl;
+			
+			User *user = _clients.getUser(_fds[i].fd);
+			if (user) {
+				user->getBuffer().append(buffer);
+				
+				std::string &userBuffer = user->getBuffer();
+				size_t pos;
+				while ((pos = userBuffer.find(CRLF)) != std::string::npos) {
+					std::string line = userBuffer.substr(0, pos);
+					userBuffer.erase(0, pos + 2);
+					
+					try {
+						Message msg = parseMessage(line);
+						CommandHandler handler = getCommandHandler(msg.command);
+						
+						if (handler) {
+							handler(*this, user, msg);
+						}
+						
+						if (user->hasQuit()) {
+							_channels.removeUserFromAll(user);
+							_clients.removeUser(_fds[i].fd);
+							removeClient(_fds[i].fd);
+							break;
+						}
+					} catch (std::exception &e) {
+						std::cerr << "Parse error: " << e.what() << std::endl;
+					}
+				}
+			}
+			i++;
+		}
 	}
 	return nothing;
 }
@@ -137,7 +178,7 @@ void	IRCServer::removeClient(int fd)
 
 void	IRCServer::NewMessage(void *buffer, int fd)
 {
-	for (int i = 1; i < _fds.size(); ++i)
+	for (size_t i = 1; i < _fds.size(); ++i)
 	{
 		if (_fds[i].fd != fd)
 		{
@@ -146,86 +187,9 @@ void	IRCServer::NewMessage(void *buffer, int fd)
 	}
 }
 
-// bool IRCServer::start() {
-	// _running = true;
-	// std::cout << "IRC server started" << std::endl;
-	
-	// while (_running) {
-	//     int result = _network.pollEvents();
-		
-	//     if (result == -1) {
-	//         if (errno == EINTR) continue;
-	//         std::cerr << "Poll error: " << std::strerror(errno) << std::endl;
-	//         return false;
-	//     }
-		
-	//     if (_network.hasNewConnection()) {
-	//         int clientFd = _network.acceptConnection();
-		//     if (clientFd != -1) {
-		//         _clients.addUser(clientFd);
-		//         User *newUser = _clients.getUser(clientFd);
-		//         if (newUser) {
-		//             std::string clientAddr = _network.getClientAddress(clientFd);
-		//             newUser->setHostname(clientAddr);
-		//         }
-		//         _network.addClient(clientFd);
-		//     }
-		// }
-		
-		// std::vector<int> readyClients = _network.getReadyClients();
-		// for (size_t i = 0; i < readyClients.size(); ++i) {
-		//     User *user = _clients.getUser(readyClients[i]);
-		//     if (!user) continue;
-			
-			// User::ReadResult res = user->receive();
-			// if (res == User::READ_ERROR || res == User::READ_EOF) {
-			//     std::cout << "Client disconnected: " << readyClients[i] << std::endl;
-			//     _channels.cv
-			//     _network.removeClient(readyClients[i]);
-			//     _clients.removeUser(readyClients[i]);
-			//     continue;
-			// }
-			
-
-
-
-
-
-
-
-	// 		std::string &buffer = user->getBuffer();
-	// 		size_t pos;
-	// 		while ((pos = buffer.find(CRLF)) != std::string::npos) {
-	// 			std::string line = buffer.substr(0, pos);
-	// 			buffer.erase(0, pos + 2);
-				
-	// 			try {
-	// 				Message msg = parseMessage(line);
-	// 				CommandHandler handler = getCommandHandler(msg.command);
-					
-	// 				if (handler) {
-	// 					handler(*this, user, msg);
-	// 				} else {
-	// 					if (user->getAuthState() == AUTH_DONE) {
-	// 						user->send(ERR_UNKNOWNCOMMAND(user->getNickname(), msg.command));
-	// 					}
-	// 				}
-					
-	// 				if (user->hasQuit()) {
-	// 					_channels.removeUserFromAll(user);
-	// 					_network.removeClient(readyClients[i]);
-	// 					_clients.removeUser(readyClients[i]);
-	// 					break;
-	// 				}
-	// 			} catch (std::exception &e) {
-	// 				std::cerr << "Parse error: " << e.what() << std::endl;
-	// 			}
-	// 		}
-	// 	}
-	// }
-	
-// 	return true;
-// }
+bool IRCServer::start() {
+	return (léa(_port) != error);
+}
 
 void IRCServer::stop() {
 	_running = false;

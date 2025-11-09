@@ -15,8 +15,6 @@ public:
     int acceptConnection();
     int pollEvents();
     
-    // void addClient(int fd);
-    // int make_poll();
     void removeClient(int fd);
     bool hasNewConnection() const;
     void	error_text(std::string msg);
@@ -27,7 +25,6 @@ public:
     
 private:
     int _serverFd;
-    // std::vector<struct pollfd> _fds;
     std::string getAddressString(struct sockaddr_in *addr) const;
 };
 
