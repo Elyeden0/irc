@@ -2,6 +2,7 @@
 #include "Commands.hpp"
 #include "Replies.hpp"
 #include "Message.hpp"
+#include <cerrno>
 
 bool IRCServer::_running = false;
 
